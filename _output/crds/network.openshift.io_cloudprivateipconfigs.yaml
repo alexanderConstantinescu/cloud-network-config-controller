@@ -1,0 +1,111 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: cloudprivateipconfigs.network.openshift.io
+spec:
+  group: network.openshift.io
+  names:
+    kind: CloudPrivateIPConfig
+    listKind: CloudPrivateIPConfigList
+    plural: cloudprivateipconfigs
+    shortNames:
+    - cpip
+    singular: cloudprivateipconfig
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.items[*].node
+      name: Node Request
+      type: string
+    - jsonPath: .spec.items[*].ip
+      name: IP Request
+      type: string
+    - jsonPath: .status.items[*].node
+      name: Node Assignment
+      type: string
+    - jsonPath: .status.items[*].ip
+      name: IP Assignment
+      type: string
+    name: v1
+    schema:
+      openAPIV3Schema:
+        description: CloudPrivateIPConfig is a CRD allowing the user to assign private
+          IP addresses to the primary NIC on cloud VMs. This is done by specifying
+          the spec with the Kubernetes node(s) the request is meant for, as well as
+          the IP(s) requested for that/those node(s).
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Specification of the desired private IP request(s).
+            properties:
+              items:
+                description: The list of per node requested private IPs and their
+                  corresponding node assignment.
+                items:
+                  properties:
+                    ip:
+                      description: IP address - can be IPv4 or IPv6
+                      type: string
+                    node:
+                      description: Node name
+                      type: string
+                  required:
+                  - ip
+                  - node
+                  type: object
+                type: array
+            required:
+            - items
+            type: object
+          status:
+            description: Observed status of CloudPrivateIPConfig. Read-only.
+            properties:
+              items:
+                description: 'The list of per node status of private IP assignments
+                  executed. In case an assignment fails: the item will be omitted
+                  from the status.items. I.e: if all went well the `.spec` should
+                  equal `.status`'
+                items:
+                  properties:
+                    ip:
+                      description: IP address - can be IPv4 or IPv6
+                      type: string
+                    node:
+                      description: Node name
+                      type: string
+                  required:
+                  - ip
+                  - node
+                  type: object
+                type: array
+            required:
+            - items
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources: {}
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
