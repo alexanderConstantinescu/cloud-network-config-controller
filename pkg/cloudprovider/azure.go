@@ -3,6 +3,8 @@ package cloudprovider
 import (
 	"net"
 
+	network "github.com/Azure/azure-sdk-for-go/profiles/latest/network/mgmt/network"
+	compute "github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-06-30/compute"
 	corev1 "k8s.io/api/core/v1"
 )
 
