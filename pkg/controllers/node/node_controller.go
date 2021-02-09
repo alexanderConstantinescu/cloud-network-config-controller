@@ -37,7 +37,7 @@ type NodeController struct {
 // NewNodeController returns a new Node controller
 func NewNodeController(
 	kubeClientset kubernetes.Interface,
-	cloudProviderClient *cloudprovider.CloudProvider,
+	cloudProviderClient cloudprovider.CloudProviderIntf,
 	nodeInformer coreinformers.NodeInformer) *NodeController {
 
 	cloudNetworkConfigController := controller.NewCloudNetworkConfigController(

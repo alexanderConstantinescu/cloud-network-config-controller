@@ -40,7 +40,7 @@ type CloudPrivateIPConfigController struct {
 // NewCloudPrivateIPConfigController returns a new CloudPrivateIPConfig controller
 func NewCloudPrivateIPConfigController(
 	kubeclientset kubernetes.Interface,
-	cloudProviderClient *cloudprovider.CloudProvider,
+	cloudProviderClient cloudprovider.CloudProviderIntf,
 	cloudPrivateIPConfigClientset cloudprivateipconfigclientset.Interface,
 	cloudPrivateIPConfigInformer cloudprivateipconfiginformers.CloudPrivateIPConfigInformer,
 	nodeInformer coreinformers.NodeInformer) *CloudPrivateIPConfigController {

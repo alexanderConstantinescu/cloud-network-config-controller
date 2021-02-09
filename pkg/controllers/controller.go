@@ -42,7 +42,7 @@ type CloudNetworkConfigController struct {
 	KubeClientset kubernetes.Interface
 	// CloudProviderClient is a client interface allowing the controller
 	// access to the cloud API
-	CloudProviderClient *cloudprovider.CloudProvider
+	CloudProviderClient cloudprovider.CloudProviderIntf
 	// Workqueue is a rate limited work queue. This is used to queue work to be
 	// processed instead of performing it as soon as a change happens. This
 	// means we can ensure we only process a fixed amount of resources at a
@@ -62,7 +62,7 @@ type CloudNetworkConfigController struct {
 
 func NewCloudNetworkConfigController(
 	kubeclientset kubernetes.Interface,
-	cloudProviderClient *cloudprovider.CloudProvider,
+	cloudProviderClient cloudprovider.CloudProviderIntf,
 	controllerKey string,
 	syncs []cache.InformerSynced) CloudNetworkConfigController {
 

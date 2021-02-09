@@ -19,8 +19,9 @@ import (
 )
 
 var (
-	masterURL  string
-	kubeconfig string
+	masterURL     string
+	kubeconfig    string
+	cloudProvider string
 )
 
 func main() {
@@ -45,7 +46,7 @@ func main() {
 		klog.Fatalf("Error building example clientset: %s", err.Error())
 	}
 
-	cloudProviderClient, err := cloudprovider.NewCloudProviderClient()
+	cloudProviderClient, err := cloudprovider.NewCloudProviderClient(cloudProvider)
 	if err != nil {
 		klog.Fatal("Error creating new cloud provider client, err: %v", err)
 	}
@@ -80,4 +81,6 @@ func main() {
 func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
+	flag.StringVar(&cloudProvider, "cloudprovider", "", "The cloud provider this component will be running on.")
+
 }
