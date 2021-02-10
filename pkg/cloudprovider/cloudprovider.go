@@ -16,7 +16,9 @@ import (
 )
 
 const (
-	cloudProviderSecretLocation = "/etc/secret/cloudprovider/"
+	cloudProviderSecretLocation  = "/etc/secret/cloudprovider/"
+	cloudProviderPollInterval    = 5
+	cloudProviderTimeoutDuration = 60
 )
 
 type CloudProviderIntf interface {
