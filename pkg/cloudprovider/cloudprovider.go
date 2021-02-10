@@ -2,9 +2,11 @@ package cloudprovider
 
 import (
 	"fmt"
+	"io/ioutil"
 	"net"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"gopkg.in/fsnotify/fsnotify.v1"
@@ -18,10 +20,25 @@ const (
 )
 
 type CloudProviderIntf interface {
-	InitCredentials() error
-	WatchForSecretChanges()
-	AssignPrivateIP(ip net.IP, node string) error
-	ReleasePrivateIP(ip net.IP, node string) error
+	initCredentials() error
+	watchForSecretChanges()
+	// AssignPrivateIP attempts at assigning the IP address provided
+	// to the VM instance corresponding to the corev1.Node provided
+	// on the cloud the cluster is deployed on.
+	// NOTE: this operation is only performed against the first
+	// network interface defined for the VM.
+	AssignPrivateIP(ip net.IP, node *corev1.Node) error
+	// ReleasePrivateIP attempts at releasing the IP address provided
+	// from the VM instance corresponding to the corev1.Node provided
+	// on the cloud the cluster is deployed on.
+	// NOTE: this operation is only performed against the first
+	// network interface defined for the VM.
+	ReleasePrivateIP(ip net.IP, node *corev1.Node) error
+	// GetNodeSubnet attempts at retrieving the IPv4 and IPv6 subnets
+	// from the VM instance corresponding to the corev1.Node provided
+	// on the cloud the cluster is deployed on.
+	// NOTE: this operation is only performed against the first
+	// network interface defined for the VM.
 	GetNodeSubnet(node *corev1.Node) (*net.IPNet, *net.IPNet, error)
 }
 
@@ -49,11 +66,19 @@ func NewCloudProviderClient(cloudProvider string) (CloudProviderIntf, error) {
 			return nil, fmt.Errorf("unsupported cloud provider: %s", cloudProvider)
 		}
 	}
-	go cloudProviderIntf.WatchForSecretChanges()
-	return cloudProviderIntf, cloudProviderIntf.InitCredentials()
+	go cloudProviderIntf.watchForSecretChanges()
+	return cloudProviderIntf, cloudProviderIntf.initCredentials()
 }
 
-func (c *CloudProvider) WatchForSecretChanges() {
+func (c *CloudProvider) readSecretData(secret string) (string, error) {
+	data, err := ioutil.ReadFile(cloudProviderSecretLocation + secret)
+	if err != nil {
+		return "", fmt.Errorf("unable to read secret data, err: %v", err)
+	}
+	return string(data), nil
+}
+
+func (c *CloudProvider) watchForSecretChanges() {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		klog.Fatal(err)
@@ -69,7 +94,7 @@ func (c *CloudProvider) WatchForSecretChanges() {
 				}
 				if event.Op&fsnotify.Write == fsnotify.Write {
 					klog.Infof("Cloud provider secret data has been re-written, re-initializing credentials")
-					if err := c.intf.InitCredentials(); err != nil {
+					if err := c.intf.initCredentials(); err != nil {
 						klog.Errorf("Error re-initializing credentials, will send SIGTERM and shutdown, err: %v", err)
 						// Don't do os.Exit here, instead trigger a SIGTERM which will call our
 						// signal handlers and initiate a controlled shutdown of all controllers
@@ -106,4 +131,8 @@ func (c *CloudProvider) WatchForSecretChanges() {
 		}
 	}
 	<-done
+}
+
+func parseProviderID(providerID string) []string {
+	return strings.Split(providerID, "/")
 }

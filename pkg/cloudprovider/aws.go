@@ -16,15 +16,15 @@ type AWS struct {
 	cloud CloudProvider
 }
 
-func (a *AWS) InitCredentials() error {
+func (a *AWS) initCredentials() error {
 	return nil
 }
 
-func (a *AWS) AssignPrivateIP(ip net.IP, node string) error {
+func (a *AWS) AssignPrivateIP(ip net.IP, node *corev1.Node) error {
 	return nil
 }
 
-func (a *AWS) ReleasePrivateIP(ip net.IP, node string) error {
+func (a *AWS) ReleasePrivateIP(ip net.IP, node *corev1.Node) error {
 	return nil
 }
 
@@ -32,6 +32,6 @@ func (a *AWS) GetNodeSubnet(node *corev1.Node) (*net.IPNet, *net.IPNet, error) {
 	return nil, nil, nil
 }
 
-func (a *AWS) WatchForSecretChanges() {
-	a.cloud.WatchForSecretChanges()
+func (a *AWS) watchForSecretChanges() {
+	a.cloud.watchForSecretChanges()
 }

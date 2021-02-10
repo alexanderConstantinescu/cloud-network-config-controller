@@ -16,15 +16,15 @@ type GCP struct {
 	cloud CloudProvider
 }
 
-func (a *GCP) InitCredentials() error {
+func (a *GCP) initCredentials() error {
 	return nil
 }
 
-func (a *GCP) AssignPrivateIP(ip net.IP, node string) error {
+func (a *GCP) AssignPrivateIP(ip net.IP, node *corev1.Node) error {
 	return nil
 }
 
-func (a *GCP) ReleasePrivateIP(ip net.IP, node string) error {
+func (a *GCP) ReleasePrivateIP(ip net.IP, node *corev1.Node) error {
 	return nil
 }
 
@@ -32,6 +32,6 @@ func (a *GCP) GetNodeSubnet(node *corev1.Node) (*net.IPNet, *net.IPNet, error) {
 	return nil, nil, nil
 }
 
-func (a *GCP) WatchForSecretChanges() {
-	a.cloud.WatchForSecretChanges()
+func (a *GCP) watchForSecretChanges() {
+	a.cloud.watchForSecretChanges()
 }

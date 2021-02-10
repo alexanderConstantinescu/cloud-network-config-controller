@@ -109,7 +109,11 @@ func (c *CloudPrivateIPConfigController) syncHandler(key string) error {
 		ip := net.ParseIP(privateIPRelease.IP)
 		// If we can't delete stale stuff, then stop right now
 		// and retry later before starting to assign new stuff
-		if err := c.CloudProviderClient.ReleasePrivateIP(ip, privateIPRelease.Node); err != nil {
+		node, err := c.nodeInformer.Get(privateIPRelease.Node)
+		if err != nil {
+			return err
+		}
+		if err := c.CloudProviderClient.ReleasePrivateIP(ip, node); err != nil {
 			return err
 		}
 	}
@@ -118,7 +122,11 @@ func (c *CloudPrivateIPConfigController) syncHandler(key string) error {
 		// No need to validate the IP address here
 		// all enqueued items will have a valid spec
 		ip := net.ParseIP(privateIPAssign.IP)
-		if err := c.CloudProviderClient.AssignPrivateIP(ip, privateIPAssign.Node); err == nil {
+		node, err := c.nodeInformer.Get(privateIPAssign.Node)
+		if err != nil {
+			return err
+		}
+		if err := c.CloudProviderClient.AssignPrivateIP(ip, node); err == nil {
 			newStatus.Items = append(newStatus.Items, privateIPAssign)
 		}
 	}
@@ -198,8 +206,10 @@ func (c *CloudPrivateIPConfigController) releaseStatusAssignment(cloudPrivateIPC
 	remainingStatus := cloudprivateipconfig.CloudPrivateIPConfigStatus{}
 	for _, privateIPStatus := range cloudPrivateIPConfig.Status.Items {
 		ip := net.ParseIP(privateIPStatus.IP)
-		if err := c.CloudProviderClient.ReleasePrivateIP(ip, privateIPStatus.Node); err != nil {
-			remainingStatus.Items = append(remainingStatus.Items, privateIPStatus)
+		if node, err := c.nodeInformer.Get(privateIPStatus.Node); err == nil {
+			if err := c.CloudProviderClient.ReleasePrivateIP(ip, node); err != nil {
+				remainingStatus.Items = append(remainingStatus.Items, privateIPStatus)
+			}
 		}
 	}
 	return remainingStatus
