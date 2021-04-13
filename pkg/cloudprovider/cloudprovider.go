@@ -3,7 +3,9 @@ package cloudprovider
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -66,4 +68,16 @@ func NewCloudProviderClient(cloudProvider string) (CloudProviderIntf, error) {
 		}
 	}
 	return cloudProviderIntf, cloudProviderIntf.initCredentials()
+}
+
+func (c *CloudProvider) readSecretData(secret string) (string, error) {
+	data, err := ioutil.ReadFile(cloudProviderSecretLocation + secret)
+	if err != nil {
+		return "", fmt.Errorf("unable to read secret data, err: %v", err)
+	}
+	return string(data), nil
+}
+
+func parseProviderID(providerID string) []string {
+	return strings.Split(providerID, "/")
 }
