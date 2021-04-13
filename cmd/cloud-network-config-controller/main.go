@@ -15,13 +15,16 @@ import (
 	cloudprovider "github.com/openshift/cloud-network-config-controller/pkg/cloudprovider"
 	cloudprivateipconfigcontroller "github.com/openshift/cloud-network-config-controller/pkg/controller/cloudprivateipconfig"
 	nodecontroller "github.com/openshift/cloud-network-config-controller/pkg/controller/node"
+	secretcontroller "github.com/openshift/cloud-network-config-controller/pkg/controller/secret"
 	signals "github.com/openshift/cloud-network-config-controller/pkg/signals"
 )
 
 var (
-	masterURL     string
-	kubeconfig    string
-	cloudProvider string
+	masterURL       string
+	kubeconfig      string
+	cloudProvider   string
+	secretName      string
+	secretNamespace string
 )
 
 func main() {
@@ -69,10 +72,23 @@ func main() {
 		cloudProviderClient,
 		kubeInformerFactory.Core().V1().Nodes(),
 	)
+	secretController := secretcontroller.NewSecretController(
+		kubeClient,
+		kubeInformerFactory.Core().V1().Secrets(),
+		secretName,
+		secretNamespace,
+	)
 
 	cloudNetworkInformerFactory.Start(stopCh)
 	kubeInformerFactory.Start(stopCh)
 
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if err = secretController.Run(stopCh); err != nil {
+			klog.Fatalf("Error running Secret controller: %s", err.Error())
+		}
+	}()
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -95,5 +111,6 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&cloudProvider, "cloudprovider", "", "The cloud provider this component is running on.")
-
+	flag.StringVar(&secretName, "secret-name", "", "The cloud provider secret name - used for talking to the cloud API.")
+	flag.StringVar(&secretNamespace, "secret-namespace", "", "The cloud provider secret namespace - used for talking to the cloud API.")
 }
