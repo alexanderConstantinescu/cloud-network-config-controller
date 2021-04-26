@@ -47,7 +47,7 @@ type CloudProvider struct {
 	intf CloudProviderIntf
 }
 
-func NewCloudProviderClient(cloudProvider string) (CloudProviderIntf, error) {
+func NewCloudProviderClient(cloudProvider, cloudRegion string) (CloudProviderIntf, error) {
 	var cloudProviderIntf CloudProviderIntf
 	switch strings.ToLower(cloudProvider) {
 	case azure:
@@ -56,7 +56,7 @@ func NewCloudProviderClient(cloudProvider string) (CloudProviderIntf, error) {
 		}
 	case aws:
 		{
-			cloudProviderIntf = &AWS{}
+			cloudProviderIntf = &AWS{region: cloudRegion}
 		}
 	case gcp:
 		{

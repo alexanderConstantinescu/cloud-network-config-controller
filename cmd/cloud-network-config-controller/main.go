@@ -23,6 +23,7 @@ var (
 	masterURL       string
 	kubeconfig      string
 	cloudProvider   string
+	cloudRegion     string
 	secretName      string
 	secretNamespace string
 )
@@ -53,7 +54,7 @@ func main() {
 		klog.Fatalf("Error building cloudnetwork clientset: %s", err.Error())
 	}
 
-	cloudProviderClient, err := cloudprovider.NewCloudProviderClient(cloudProvider)
+	cloudProviderClient, err := cloudprovider.NewCloudProviderClient(cloudProvider, cloudRegion)
 	if err != nil {
 		klog.Fatal("Error building cloud provider client, err: %v", err)
 	}
@@ -111,6 +112,7 @@ func init() {
 	flag.StringVar(&kubeconfig, "kubeconfig", "", "Path to a kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&masterURL, "master", "", "The address of the Kubernetes API server. Overrides any value in kubeconfig. Only required if out-of-cluster.")
 	flag.StringVar(&cloudProvider, "cloudprovider", "", "The cloud provider this component is running on.")
+	flag.StringVar(&cloudRegion, "cloudregion", "", "The cloud region the cluster is deployed in, this is explicitly required for talking to the AWS API.")
 	flag.StringVar(&secretName, "secret-name", "", "The cloud provider secret name - used for talking to the cloud API.")
 	flag.StringVar(&secretNamespace, "secret-namespace", "", "The cloud provider secret namespace - used for talking to the cloud API.")
 }
