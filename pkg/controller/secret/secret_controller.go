@@ -1,9 +1,9 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"reflect"
-	"syscall"
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -30,16 +30,22 @@ var (
 type SecretController struct {
 	// Implements its own Secret lister
 	secretLister corelisters.SecretLister
+	// controllerCancel is the components global cancelFunc. This one is used to
+	// cancel the global context, stop the leader election and subsequently
+	// initiate a shut down of all control loops
+	controllerCancel context.CancelFunc
 }
 
 // NewSecretController returns a new Secret controller
 func NewSecretController(
+	controllerCancel context.CancelFunc,
 	kubeClientset kubernetes.Interface,
 	secretInformer coreinformers.SecretInformer,
 	secretName, secretNamespace string) *controller.CloudNetworkConfigController {
 
 	secretController := &SecretController{
-		secretLister: secretInformer.Lister(),
+		secretLister:     secretInformer.Lister(),
+		controllerCancel: controllerCancel,
 	}
 
 	controller := controller.NewCloudNetworkConfigController(
@@ -89,8 +95,8 @@ func NewSecretController(
 }
 
 // syncHandler does not compare the actual state with the desired, it's
-// triggered on a secret.data change and kills our process forcing us to
-// re-initialize the cloud credentials on restart.
+// triggered on a secret.data change and cancels the global context forcing us
+// to re-initialize the cloud credentials on restart.
 func (s *SecretController) SyncHandler(key string) error {
 	// Convert the key to a name/namespace
 	klog.Infof("Processing key: %s from corev1.Secret work queue", key)
@@ -106,21 +112,21 @@ func (s *SecretController) SyncHandler(key string) error {
 		// we should not be able to restart since we won't be able to mount
 		// the secret location upon restart.
 		if errors.IsNotFound(err) {
-			return s.shutdown()
+			s.shutdown()
+			return nil
 		}
 		return fmt.Errorf("error retrieving corev1.Secret from the API server, err: %v", err)
 	}
-	return s.shutdown()
+	s.shutdown()
+	return nil
 }
 
-// shutdown is called in case we hit a secret rotation. We need to:
-// process all in-flight requests and pause all our controllers for any
-// further ones (since we can't communicate with the cloud API using the
-// old data anymore). I don't know what the "Kubernetes-y" thing to do is,
-// but it seems like sending a SIGTERM will do just that.
-func (s *SecretController) shutdown() error {
-	// Don't do os.Exit here, instead trigger a SIGTERM which will call our
-	// signal handlers and initiate a controlled shutdown of all controllers
-	klog.Info("Re-initializing cloud API credentials, will send SIGTERM and shutdown")
-	return syscall.Kill(syscall.Getpid(), syscall.SIGTERM)
+// shutdown is called in case we hit a secret rotation. We need to: process all
+// in-flight requests and pause all our controllers for any further ones (since
+// we can't communicate with the cloud API using the old data anymore). I don't
+// know what the "Kubernetes-y" thing to do is, but it seems like cancelling the
+// global context and subsequently sending a SIGTERM will do just that.
+func (s *SecretController) shutdown() {
+	klog.Info("Re-initializing cloud API credentials, cancelling controller context")
+	s.controllerCancel()
 }
