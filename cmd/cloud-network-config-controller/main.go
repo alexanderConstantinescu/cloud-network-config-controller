@@ -29,14 +29,13 @@ const (
 )
 
 var (
-	masterURL       string
-	kubeconfig      string
-	cloudProvider   string
-	cloudRegion     string
-	secretName      string
-	secretNamespace string
-	podName         string
-	podNamespace    string
+	masterURL     string
+	kubeconfig    string
+	cloudProvider string
+	cloudRegion   string
+	secretName    string
+	podName       string
+	podNamespace  string
 )
 
 func main() {
@@ -117,7 +116,7 @@ func main() {
 					kubeClient,
 					kubeInformerFactory.Core().V1().Secrets(),
 					secretName,
-					secretNamespace,
+					podNamespace,
 				)
 
 				cloudNetworkInformerFactory.Start(stopCh)
@@ -170,7 +169,6 @@ func init() {
 	flag.StringVar(&cloudProvider, "cloudprovider", "", "The cloud provider this component is running on.")
 	flag.StringVar(&cloudRegion, "cloudregion", "", "The cloud region the cluster is deployed in, this is explicitly required for talking to the AWS API.")
 	flag.StringVar(&secretName, "secret-name", "", "The cloud provider secret name - used for talking to the cloud API.")
-	flag.StringVar(&secretNamespace, "secret-namespace", "", "The cloud provider secret namespace - used for talking to the cloud API.")
 
 	// These are populate by the downward API
 	podNamespace = os.Getenv("POD_NAMESPACE")
